@@ -67,7 +67,7 @@ def _extract_blocks(module_ast):
     blocks = [(_jet_init_key, module_ast['init'] + _end_of_jet_init)]
 
     if 'blocks' in module_ast:
-        blocks += [(block.name, codegen.to_source(block) + '\n\n') for block in module_ast['blocks']]
+        blocks += [(block.name, codegen.to_source(block)) for block in module_ast['blocks']]
 
     return OrderedDict(blocks)
 
@@ -82,7 +82,7 @@ def _save_blocks(blocks, file_path):
 # DECLARATION BLOCK
 def _find_last_decl(In, decl_name):
     for cell in reversed(In):
-        decl_ast = [decl for decl in ast.parse(cell).body if hasattr(c, 'name')]
+        decl_ast = [decl for decl in ast.parse(cell).body if hasattr(decl, 'name')]
 
         if len(decl_ast) > 0:
             for decl in decl_ast:
