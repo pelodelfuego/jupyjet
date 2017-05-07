@@ -11,7 +11,7 @@ Practically speaking, for each notebook a python file is dynamically created:
 ie - it generate python modules based of notebook content.
 
 
-**Importante note**: Jupyjet works only on unix based system for now.
+**Importante note: Jupyjet works only on unix based system for now.**
 
 
 
@@ -22,7 +22,7 @@ Only 2 magics commands are exposed: `%jet-init` and `%jet`
 
 * **jet-init**: save all the content of the current cell and place it at the top of the file.
 It is supposed to contains imports / global variables.
-*NB: Only one init is allowed.*
+*NB: Only one init is allowed and it must be the last line of the cell.*
 
 * **jet** decl1 decl2 ...: save or update the declaration in the file.
 Classes, function and decorators are supported.
@@ -81,6 +81,7 @@ def circle_area(r):
 ```
 
 So this python generated module can be called from other notebooks.
+*NB: comments are not saved in the genrated files.*
 
 
 Install
