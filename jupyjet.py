@@ -67,7 +67,7 @@ def _extract_blocks(module_ast):
     blocks = [(_jet_init_key, module_ast['init'] + _end_of_jet_init)]
 
     if 'blocks' in module_ast:
-        blocks += [(block.name, codegen.to_source(block)) for block in module_ast['blocks']]
+        blocks += [(block.name, codegen.to_source(block) + '\n') for block in module_ast['blocks']]
 
     return OrderedDict(blocks)
 
@@ -87,7 +87,7 @@ def _find_last_decl(In, decl_name):
         if len(decl_ast) > 0:
             for decl in decl_ast:
                 if decl.name == decl_name:
-                    return codegen.to_source(decl)
+                    return codegen.to_source(decl) + '\n'
 
 
 def _update_decl(In, blocks, decl):

@@ -1,26 +1,121 @@
-# jupy-jet
+
+Jupy-jet
+=======
+
+Jupyjet is a IPython notebook extension to facilitate:
+
+* [Literate programming](https://en.wikipedia.org/wiki/Literate_programming)
+* Separate a big notebook into several smaller notebooks / modules.
+
+Practically speaking, for each notebook a python file is dynamically created:
+ie - it generate python modules based of notebook content.
 
 
-'''
+**Importante note**: Jupyjet works only on unix based system for now.
+
+
+
+Usage
+--------
+
+Only 2 magics commands are exposed: `%jet-init` and `%jet`
+
+* **jet-init**: save all the content of the current cell and place it at the top of the file.
+It is supposed to contains imports / global variables.
+*NB: Only one init is allowed.*
+
+* **jet** decl1 decl2 ...: save or update the declaration in the file.
+Classes, function and decorators are supported.
+The file content is updated everytime the magic runs.
+
+
+Example
+------------
+
+
+**my_super_notebook.ipynb**
+```
+import numpy as np
+pi = 3.14
+
+%jet-init
+```
+We declare here the header of the file
+
+```
+def circle_perim(r):
+	return 2 * pi * r
+
+def circle_area(r):
+	return pi * r**2
+
+%jet circle_perm circle_area
+```
+And save them to the file
+
+
+```
+print circle_perm(2.)
+print circle_area(2.2)
+```
+
+We can use the function normally but the declaration are also saved into a generated file like this:
+
+
+**my_super_notebook.py**
+```
+import numpy as np
+pi = 3.14
+
+
+# --- JET INIT END --- #
+
+
+
+def circle_perim(r):
+    return 2 * pi * r
+
+
+def circle_area(r):
+    return pi * r ** 2
+```
+
+So this python generated module can be called from other notebooks.
+
+
+Install
+---------
+Jupyjet is available on pip:
+
+```
+pip install ********
+```
+
+
+#### Enable the extension
+
+Here is a small guide to activate the extension.
+
+##### 1. Create a jupyter profile
+
+`$ ipython profile create`
+
+It will generate a default profile file at: `~/.ipython/profile_default/ipython_config.py`.
+
+
+##### 2. Register Jupyjet as an extension (and other cool ones like [line-profiler](https://github.com/rkern/line_profiler)).
+
+To do so add the following lines.
+
+```
 c.TerminalIPythonApp.extensions = [
-    'my_ext',
+    'jupyjet',
+    'line_profiler',
 ]
 c.InteractiveShellApp.extensions = [
-    'my_ext',
+    'jupyjet',
+    'line_profiler',
 ]
-''
+```
 
-
-'''
-import jupyjet
-
-import line_profiler
-
-import memory_profiler
-
-def load_ipython_extension(ip):
-    ip.register_magics(jupyjet.JetMagics)
-    ip.register_magics(line_profiler.LineProfilerMagics)
-    ip.register_magics(memory_profiler.MemoryProfilerMagics)
-'''
-
+##### 3. Enjoy =)

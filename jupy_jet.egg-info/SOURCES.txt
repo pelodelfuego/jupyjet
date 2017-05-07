@@ -1,8 +1,0 @@
-README
-jupyjet.py
-setup.py
-jupy_jet.egg-info/PKG-INFO
-jupy_jet.egg-info/SOURCES.txt
-jupy_jet.egg-info/dependency_links.txt
-jupy_jet.egg-info/requires.txt
-jupy_jet.egg-info/top_level.txt
