@@ -88,7 +88,7 @@ Install
 Jupyjet is available on pip:
 
 ```
-pip install ********
+pip install jupyjet
 ```
 
 
