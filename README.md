@@ -80,6 +80,7 @@ def circle_area(r):
 ```
 
 So this python generated module can be called from other notebooks.
+
 *NB: comments are not saved in the genrated files.*
 
 
