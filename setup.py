@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from distutils.core import setup
+from setuptools import setup
 
 long_description = """\
 Jupyjet is a IPyhton notebook extention which allow you to dynamically genrate python files from cells.
@@ -22,7 +22,7 @@ setup(
     description='jupyter extention to generate python modules',
     long_description=long_description,
     keywords = ['jupyter', 'notebook', 'module', 'jupyjet'],
-    install_required = ['IPython>=0.13', 'codegen==1.0'],
+    install_requires = ['IPython>=0.13', 'codegen==1.0'],
 )
 
 

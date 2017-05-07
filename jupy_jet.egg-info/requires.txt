@@ -1,0 +1,2 @@
+IPython>=0.13
+codegen==1.0

@@ -1,0 +1,15 @@
+Metadata-Version: 1.0
+Name: jupy-jet
+Version: 0.1.0
+Summary: jupyter extention to generate python modules
+Home-page: https://github.com/pelodelfuego/jupy-jet
+Author: Clément CREPY
+Author-email: clement.crepy@gmail.com
+License: MIT
+Description: Jupyjet is a IPyhton notebook extention which allow you to dynamically genrate python files from cells.
+        
+        Code portions registered with %jet or %jet-init magics will be written and updated into a python file.
+        This approach make possible to easily separate a notebook into several notebooks and bind them.
+        
+Keywords: jupyter,notebook,module,jupyjet
+Platform: UNKNOWN
