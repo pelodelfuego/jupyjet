@@ -54,7 +54,7 @@ And save them to the file
 
 
 ```
-print circle_perm(2.)
+print circle_perim(2.)
 print circle_area(2.2)
 ```
 
