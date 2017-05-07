@@ -1,3 +1,4 @@
 *.pyc
 .jupyjet.py.swp
 .gitignore
+dist/*
