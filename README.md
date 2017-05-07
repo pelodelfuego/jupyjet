@@ -1,5 +1,4 @@
-
-Jupy-jet
+Jupyjet
 =======
 
 Jupyjet is a IPython notebook extension to facilitate:
@@ -18,9 +17,9 @@ ie - it generate python modules based of notebook content.
 Usage
 --------
 
-Only 2 magics commands are exposed: `%jet-init` and `%jet`
+Only 2 magics commands are exposed: `%jet_init` and `%jet`
 
-* **jet-init**: save all the content of the current cell and place it at the top of the file.
+* **jet_init**: save all the content of the current cell and place it at the top of the file.
 It is supposed to contains imports / global variables.
 *NB: Only one init is allowed and it must be the last line of the cell.*
 
@@ -38,7 +37,7 @@ Example
 import numpy as np
 pi = 3.14
 
-%jet-init
+%jet_init
 ```
 We declare here the header of the file
 

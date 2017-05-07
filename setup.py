@@ -12,8 +12,8 @@ This approach make possible to easily separate a notebook into several notebooks
 """
 
 setup(
-    name='jupy-jet',
-    url='https://github.com/pelodelfuego/jupy-jet',
+    name='jupyjet',
+    url='https://github.com/pelodelfuego/jupyjet',
     author='Clément CREPY',
     author_email='clement.crepy@gmail.com',
     version='0.1.0',
