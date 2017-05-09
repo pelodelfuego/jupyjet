@@ -4,7 +4,10 @@
 
 import json, urllib2
 import os
-import ast, codegen
+import ast
+
+import psutil, codegen
+
 
 import IPython
 from IPython.core.magic import (Magics, magics_class, line_magic)
@@ -24,10 +27,10 @@ def _find_module_path():
     kernel_id = connection_file.split('-', 1)[1].split('.')[0]
 
     app_dict = IPython.Application.instance().session.__dict__
-    pid = str(app_dict['_trait_values']['pid'])
+    pid = app_dict['_trait_values']['pid']
 
-    parent_pid = os.popen('ps -o ppid= -p ' + pid).read()
-    adress = os.popen("ss -l -p -n | grep " + parent_pid).read().split('\n')[0].split()[4]
+    adress = psutil.Process(pid).parent().connections()[0].laddr
+    adress = ':'.join([adress[0], str(adress[1])])
 
     sessions = json.load(urllib2.urlopen('http://' + adress + '/api/sessions'))
     ntb_name_list = [sess['notebook']['path'] for sess in sessions if sess['kernel']['id'] == kernel_id]

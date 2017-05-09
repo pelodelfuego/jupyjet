@@ -5,7 +5,7 @@
 from setuptools import setup
 
 long_description = """\
-Jupyjet is a IPyhton notebook extention which allow you to dynamically genrate python files from cells.
+Jupyjet is a IPyhton notebook extention which allows you to dynamically genrates python file / module from a notebook.
 
 Code portions registered with %jet or %jet-init magics will be written and updated into a python file.
 This approach make possible to easily separate a notebook into several notebooks and bind them.
@@ -22,7 +22,8 @@ setup(
     description='jupyter extention to generate python modules',
     long_description=long_description,
     keywords = ['jupyter', 'notebook', 'module', 'jupyjet'],
-    install_requires = ['IPython>=0.13', 'codegen==1.0'],
+    install_requires = ['IPython>=0.13',
+                        'codegen==1.0'],
 )
 
 
