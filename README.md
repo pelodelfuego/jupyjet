@@ -10,9 +10,6 @@ Practically speaking, for each notebook a python file is dynamically created:
 ie - it generate python modules based of notebook content.
 
 
-**Importante note: Jupyjet works only on unix based system for now.**
-
-
 
 Usage
 --------
