@@ -23,7 +23,8 @@ setup(
     long_description=long_description,
     keywords = ['jupyter', 'notebook', 'module', 'jupyjet'],
     install_requires = ['IPython>=0.13',
-                        'codegen==1.0'],
+                        'codegen==1.0',
+                        'psutil==5.1.3'],
 )
 
 
