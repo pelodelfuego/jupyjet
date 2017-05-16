@@ -7,7 +7,7 @@ Jupyjet is a IPython notebook extension to facilitate:
 * Separate a big notebook into several smaller notebooks / modules.
 
 Practically speaking, for each notebook a python file is dynamically created:<br>
-ie - it generate python modules based of notebook content.
+*ie - it generate python modules based of notebook content.*
 
 
 
@@ -41,6 +41,7 @@ pi = 3.14
 ```
 *And save it as raw content*
 
+<hr>
 
 *Cell 2 - We create a few functions*
 
@@ -55,6 +56,7 @@ def circle_area(r):
 ```
 *And save them*
 
+<hr>
 
 *Cell 3 - in the context of the notebook, we can run some experiement*<br>
 *We can then use these functions normally*
@@ -64,9 +66,9 @@ print circle_area(2.2)
 ```
 *The results won't be saved into the file*
 
+<hr>
 
 The coresponding generated file like this:
-
 
 **my_super_notebook.py**
 ```
