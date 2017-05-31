@@ -6,8 +6,8 @@ Jupyjet is a IPython notebook extension to facilitate:
 * [Literate programming](https://en.wikipedia.org/wiki/Literate_programming)
 * Separate a big notebook into several smaller notebooks / modules.
 
-Practically speaking, for each notebook a python file is dynamically created:
-ie - it generate python modules based of notebook content.
+Practically speaking, for each notebook a python file is dynamically created:<br>
+*ie - it generate python modules based of notebook content.*
 
 
 
@@ -30,13 +30,20 @@ Example
 
 
 **my_super_notebook.ipynb**
+
+*Cell 1 - We declare here the header of the file*
+
 ```
 import numpy as np
 pi = 3.14
 
 %jet_init
 ```
-We declare here the header of the file
+*And save it as raw content*
+
+<hr>
+
+*Cell 2 - We create a few functions*
 
 ```
 def circle_perim(r):
@@ -47,16 +54,21 @@ def circle_area(r):
 
 %jet circle_perm circle_area
 ```
-And save them to the file
+*And save them*
 
+<hr>
 
+*Cell 3 - in the context of the notebook, we can run some experiement*<br>
+*We can then use these functions normally*
 ```
 print circle_perim(2.)
 print circle_area(2.2)
 ```
+*The results won't be saved into the file*
 
-We can use the function normally but the declaration are also saved into a generated file like this:
+<hr>
 
+The coresponding generated file like this:
 
 **my_super_notebook.py**
 ```
