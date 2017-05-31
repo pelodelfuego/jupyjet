@@ -29,7 +29,7 @@ def _find_module_path():
     app_dict = IPython.Application.instance().session.__dict__
     pid = app_dict['_trait_values']['pid']
 
-    adress = psutil.Process(pid).parent().connections()[0].laddr
+    adress = [a for a in psutil.Process(pid).parent().connections() if a.status == psutil.CONN_LISTEN].pop().laddr
     adress = ':'.join([adress[0], str(adress[1])])
 
     sessions = json.load(urllib2.urlopen('http://' + adress + '/api/sessions'))
