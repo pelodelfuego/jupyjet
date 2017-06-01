@@ -36,7 +36,7 @@ def _find_module_path():
     ntb_name_list = [sess['notebook']['path'] for sess in sessions if sess['kernel']['id'] == kernel_id]
 
     assert len(ntb_name_list) == 1
-    ntb_name = '.'.join(ntb_name_list[0].split('.')[:-1])
+    ntb_name = '.'.join(ntb_name_list[0].split('.')[:-1]).split('/')[-1]
 
     return {'top_dir': os.getcwd(),'module_name': ntb_name}
 
