@@ -16,15 +16,16 @@ setup(
     url='https://github.com/pelodelfuego/jupyjet',
     author='Clément CREPY',
     author_email='clement.crepy@gmail.com',
-    version='0.2.2',
+    version='0.2.3',
     py_modules=['jupyjet'],
     license='MIT',
     description='jupyter extention to generate python modules',
     long_description=long_description,
     keywords = ['jupyter', 'notebook', 'module', 'jupyjet'],
     install_requires = ['IPython>=0.13',
-                        'codegen==1.0',
-                        'psutil==5.1.3'],
+                        'codegen>=1.0',
+                        'psutil>=5.1.3',
+                        'urllib3>=1.9.1'],
 )
 
 

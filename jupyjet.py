@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-import json, urllib2
+import json, urllib3
 import os
 import ast
 
@@ -32,7 +32,7 @@ def _find_module_path():
     adress = [a for a in psutil.Process(pid).parent().connections() if a.status == psutil.CONN_LISTEN].pop().laddr
     adress = ':'.join([adress[0], str(adress[1])])
 
-    sessions = json.load(urllib2.urlopen('http://' + adress + '/api/sessions'))
+    sessions = json.loads(urllib3.PoolManager().request('GET', 'http://' + adress + '/api/sessions').data)
     ntb_name_list = [sess['notebook']['path'] for sess in sessions if sess['kernel']['id'] == kernel_id]
 
     assert len(ntb_name_list) == 1
