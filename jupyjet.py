@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-import json, urllib3
+import json, requests
 import os
 import ast
 
 import psutil, codegen
-
 
 import IPython
 from IPython.core.magic import (Magics, magics_class, line_magic)
@@ -32,7 +31,7 @@ def _find_module_path():
     adress = [a for a in psutil.Process(pid).parent().connections() if a.status == psutil.CONN_LISTEN].pop().laddr
     adress = ':'.join([adress[0], str(adress[1])])
 
-    sessions = json.loads(urllib3.PoolManager().request('GET', 'http://' + adress + '/api/sessions').data)
+    sessions = requests.get('http://' + adress + '/api/sessions').json()
     ntb_name_list = [sess['notebook']['path'] for sess in sessions if sess['kernel']['id'] == kernel_id]
 
     assert len(ntb_name_list) == 1
