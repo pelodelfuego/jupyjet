@@ -3,9 +3,11 @@
 
 
 import json, requests
-import os
+import os, re
+
 import ast
 
+from collections import OrderedDict
 from functools import reduce
 
 import psutil, codegen
@@ -14,16 +16,20 @@ import IPython
 from IPython.core.magic import Magics, magics_class, line_magic
 from IPython.core.display import display, Javascript
 from IPython.lib import kernel as ip_ker
-from collections import OrderedDict
 
 
 
-_jet_init_key = '__jet_init_block'
-_end_of_jet_init = '\n# --- JET INIT END --- #\n\n'
+_jet_beg_key = '__jet_beg'
+_jet_end_key = '__jet_end'
+
+_jet_beg = '# --- JET BEG --- #'
+_jet_end = '# --- JET END --- #'
+
+_jet_split_re = re.compile('# --- JET (BEG|END) --- #')
 
 
 # PATH
-def _find_module_path():
+def _find_file_path():
     """
     Find the local path to the current notebook.
     """
@@ -51,16 +57,16 @@ def _find_module_path():
     assert len(ntb_name_list) == 1
     ntb_name = '.'.join(ntb_name_list[0].split('.')[:-1]).split('/')[-1]
 
-    return {'top_dir': os.getcwd(),'module_name': ntb_name}
+    return {'top_dir': os.getcwd(),'file_name': ntb_name}
 
 
-def _build_module_path():
+def _build_file_path():
     """
     Construct the path to the generated python file.
     """
 
-    mp = _find_module_path()
-    return mp['top_dir'] + '/' + mp['module_name'] + '.py'
+    mp = _find_file_path()
+    return mp['top_dir'] + '/' + mp['file_name'] + '.py'
 
 
 def _build_notebook_path():
@@ -68,57 +74,62 @@ def _build_notebook_path():
     Construct the path to the existing notebook file.
     """
 
-    mp = _find_module_path()
-    return mp['top_dir'] + '/' + mp['module_name'] + '.ipynb'
+    mp = _find_file_path()
+    return mp['top_dir'] + '/' + mp['file_name'] + '.ipynb'
 
 
 # FILE
-def _load_module_ast():
+def _load_file_ast():
     """
     Build the ast of the current python file.
     """
 
     # the ast should be empty if the file does not exist
-    mfp = _build_module_path()
+    mfp = _build_file_path()
     if not os.path.isfile(mfp):
-        return {'init': '', 'blocks': []}
+        return {'beg': '',
+                'symbols': [],
+                'end': ''}
 
     # if it does, the ast is loaded
     with open(mfp) as source_file:
         # TODO: add end
-        module_code = source_file.read().split(_end_of_jet_init)
-        if len(module_code) == 1:
-            return {'init': module_code[0]}
+        # file_code = source_file.read().split(_jet_beg)
+        file_code = _jet_split_re.split(source_file.read())[::2]
+        if len(file_code) == 1:
+            return {'beg': file_code[0]}
 
-        return {'init': module_code[0], 'blocks': ast.parse(module_code[1]).body}
+        return {'beg': file_code[0],
+                'symbols': ast.parse(file_code[1]).body,
+                'end': None}
 
 
-# BLOCKS
-def _extract_blocks(module_ast):
+# symbols
+def _extract_symbols(file_ast):
     """
-    Extract the symbols from the module ast.
+    Extract the symbols from the file ast.
     """
 
-    blocks = [(_jet_init_key, module_ast['init'] + _end_of_jet_init)]
+    symbols = [(_jet_beg_key, file_ast['beg'] + _jet_beg)]
 
-    if 'blocks' in module_ast:
-        blocks += [(block.name, codegen.to_source(block) + '\n') for block in module_ast['blocks']]
+    if 'symbols' in file_ast:
+        symbols += [(symb.name, codegen.to_source(symb) + '\n') for symb in file_ast['symbols']]
 
-    return OrderedDict(blocks)
+    return OrderedDict(symbols)
 
 
-def _save_blocks(blocks, file_path):
+def _save_symbols(symbols, file_path):
     """
     Save the symbols into the file.
     """
 
-    blocks_str = '\n\n'.join(blocks.values())
+    symbols_content = '\n\n'.join(symbols.values())
 
-    with open(file_path, 'w') as module_file:
-        module_file.write(blocks_str)
+    with open(file_path, 'w') as file_file:
+        file_file.write(symbols_content)
 
 
-# DECLARATION BLOCK
+# DECLARATION symb
 def _find_last_decl(In, decl_name):
     for cell in reversed(In):
         decl_ast = [decl for decl in ast.parse(cell).body if hasattr(decl, 'name')]
@@ -129,28 +140,28 @@ def _find_last_decl(In, decl_name):
                     return codegen.to_source(decl) + '\n'
 
 
-def _update_decl(In, blocks, decl):
-    new_blocks = OrderedDict(blocks)
-    new_blocks[decl.__name__] = _find_last_decl(In, decl.__name__)
-    return new_blocks
+def _update_decl(In, symbols, decl):
+    new_symbols = OrderedDict(symbols)
+    new_symbols[decl.__name__] = _find_last_decl(In, decl.__name__)
+    return new_symbols
 
 
-# INIT BLOCK
-def _get_init_block(In):
+# BEG symb
+def _get_beg_symb(In):
     raw_content = In[-1]
     content = raw_content.split('\n')
-    content[-1] = _end_of_jet_init
+    content[-1] = _jet_beg
 
-    return (_jet_init_key, '\n'.join(content))
+    return (_jet_beg_key, '\n'.join(content))
 
 
-def _update_init_block(blocks_dict, init_block):
-    if _jet_init_key in blocks_dict:
-        new_blocks = OrderedDict(blocks_dict)
-        new_blocks[_jet_init_key] = init_block[1]
-        return new_blocks
+def _update_beg_symb(symbols_dict, beg_symb):
+    if _jet_beg_key in symbols_dict:
+        new_symbols = OrderedDict(symbols_dict)
+        new_symbols[_jet_beg_key] = beg_symb[1]
+        return new_symbols
     else:
-        return OrderedDict([init_block] + [(k, v) for k, v in blocks_dict.iteritems()])
+        return OrderedDict([beg_symb] + [(k, v) for k, v in symbols_dict.iteritems()])
 
 
 # POINT OF ENTRY
@@ -158,22 +169,22 @@ def _update_init_block(blocks_dict, init_block):
 class JetMagics(Magics):
 
     @line_magic
-    def jet_init(self, arg_line):
+    def jet_beg(self, arg_line):
         In = self.shell.user_ns['In']
-        new_blocks = _update_init_block(_extract_blocks(_load_module_ast()), _get_init_block(In))
+        new_symbols = _update_beg_symb(_extract_symbols(_load_file_ast()), _get_beg_symb(In))
 
-        _save_blocks(new_blocks, _build_module_path())
+        _save_symbols(new_symbols, _build_file_path())
 
     @line_magic
     def jet(self, arg_line):
         In = self.shell.user_ns['In']
         decl_list = [eval(func_name, self.shell.user_global_ns, self.shell.user_ns) for func_name in arg_line.split()]
 
-        new_blocks = reduce(lambda cur_bloc, new_decl: _update_decl(In, cur_bloc, new_decl),
+        new_symbols = reduce(lambda cur_bloc, new_decl: _update_decl(In, cur_bloc, new_decl),
                             decl_list,
-                            _extract_blocks(_load_module_ast()))
+                            _extract_symbols(_load_file_ast()))
 
-        _save_blocks(new_blocks, _build_module_path())
+        _save_symbols(new_symbols, _build_file_path())
 
 
 def load_ipython_extension(ip):
