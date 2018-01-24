@@ -6,11 +6,13 @@ import json, requests
 import os
 import ast
 
+from functools import reduce
+
 import psutil, codegen
 
 import IPython
-from IPython.core.magic import (Magics, magics_class, line_magic)
-from IPython.core.display import (display, Javascript)
+from IPython.core.magic import Magics, magics_class, line_magic
+from IPython.core.display import display, Javascript
 from IPython.lib import kernel as ip_ker
 from collections import OrderedDict
 
@@ -22,16 +24,28 @@ _end_of_jet_init = '\n# --- JET INIT END --- #\n\n'
 
 # PATH
 def _find_module_path():
+    """
+    Find the local path to the current notebook.
+    """
+
+    # fetch into the socket file to find the kernel id
     connection_file = os.path.basename(ip_ker.get_connection_file())
     kernel_id = connection_file.split('-', 1)[1].split('.')[0]
 
+    # from the kernel id, retrieve the PID of the kernel
     app_dict = IPython.Application.instance().session.__dict__
     pid = app_dict['_trait_values']['pid']
 
-    adress = [a for a in psutil.Process(pid).parent().connections() if a.status == psutil.CONN_LISTEN].pop().laddr
-    adress = ':'.join([adress[0], str(adress[1])])
+    # from the pid, retrive the running port on the local machine
+    address = [a for a in psutil.Process(pid).parent().connections() if a.status == psutil.CONN_LISTEN].pop().laddr
+    address = ':'.join([address[0], str(address[1])])
 
-    sessions = requests.get('http://' + adress + '/api/sessions').json()
+    # build the url of the client
+    url = 'http://' + address + '/api/sessions'
+    url = url.replace('http://::1', 'http://localhost')
+
+    # fetch the current session of the client
+    sessions = requests.get(url).json()
     ntb_name_list = [sess['notebook']['path'] for sess in sessions if sess['kernel']['id'] == kernel_id]
 
     assert len(ntb_name_list) == 1
@@ -41,22 +55,37 @@ def _find_module_path():
 
 
 def _build_module_path():
+    """
+    Construct the path to the generated python file.
+    """
+
     mp = _find_module_path()
     return mp['top_dir'] + '/' + mp['module_name'] + '.py'
 
 
 def _build_notebook_path():
+    """
+    Construct the path to the existing notebook file.
+    """
+
     mp = _find_module_path()
     return mp['top_dir'] + '/' + mp['module_name'] + '.ipynb'
 
 
 # FILE
 def _load_module_ast():
+    """
+    Build the ast of the current python file.
+    """
+
+    # the ast should be empty if the file does not exist
     mfp = _build_module_path()
     if not os.path.isfile(mfp):
         return {'init': '', 'blocks': []}
 
+    # if it does, the ast is loaded
     with open(mfp) as source_file:
+        # TODO: add end
         module_code = source_file.read().split(_end_of_jet_init)
         if len(module_code) == 1:
             return {'init': module_code[0]}
@@ -66,6 +95,10 @@ def _load_module_ast():
 
 # BLOCKS
 def _extract_blocks(module_ast):
+    """
+    Extract the symbols from the module ast.
+    """
+
     blocks = [(_jet_init_key, module_ast['init'] + _end_of_jet_init)]
 
     if 'blocks' in module_ast:
@@ -75,6 +108,10 @@ def _extract_blocks(module_ast):
 
 
 def _save_blocks(blocks, file_path):
+    """
+    Save the symbols into the file.
+    """
+
     blocks_str = '\n\n'.join(blocks.values())
 
     with open(file_path, 'w') as module_file:
