@@ -96,12 +96,15 @@ def _load_file_ast():
         # TODO: add end
         # file_code = source_file.read().split(_jet_beg)
         file_code = _jet_split_re.split(source_file.read())[::2]
-        if len(file_code) == 1:
-            return {'beg': file_code[0]}
+
+        # assert len(file_code) == 3
+
+        # if len(file_code) == 1:
+            # return {'beg': file_code[0]}
 
         return {'beg': file_code[0],
                 'symbols': ast.parse(file_code[1]).body,
-                'end': None}
+                'end': file_code[2]}
 
 
 # symbols
@@ -111,9 +114,8 @@ def _extract_symbols(file_ast):
     """
 
     symbols = [(_jet_beg_key, file_ast['beg'] + _jet_beg)]
-
-    if 'symbols' in file_ast:
-        symbols += [(symb.name, codegen.to_source(symb) + '\n') for symb in file_ast['symbols']]
+    symbols += [(symb.name, codegen.to_source(symb) + '\n') for symb in file_ast['symbols']]
+    symbols += [(_jet_end_key, file_ast['end'] + _jet_end)]
 
     return OrderedDict(symbols)
 
@@ -125,18 +127,20 @@ def _save_symbols(symbols, file_path):
 
     symbols_content = '\n\n'.join(symbols.values())
 
+    print(symbols_content)
+
     with open(file_path, 'w') as file_file:
         file_file.write(symbols_content)
 
 
 # DECLARATION symb
-def _find_last_decl(In, decl_name):
+def _find_last_decl(In, symb_name):
     for cell in reversed(In):
         decl_ast = [decl for decl in ast.parse(cell).body if hasattr(decl, 'name')]
 
         if len(decl_ast) > 0:
             for decl in decl_ast:
-                if decl.name == decl_name:
+                if decl.name == symb_name:
                     return codegen.to_source(decl) + '\n'
 
 
@@ -161,7 +165,9 @@ def _update_beg_symb(symbols_dict, beg_symb):
         new_symbols[_jet_beg_key] = beg_symb[1]
         return new_symbols
     else:
-        return OrderedDict([beg_symb] + [(k, v) for k, v in symbols_dict.iteritems()])
+        return OrderedDict([beg_symb] + \
+                           [(k, v) for k, v in symbols_dict.iteritems()] + \
+                           [end_symb])
 
 
 # POINT OF ENTRY
