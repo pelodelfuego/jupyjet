@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 
@@ -19,16 +19,13 @@ from IPython.lib import kernel as ip_ker
 
 
 
-_jet_beg_key = '__jet_beg'
-_jet_end_key = '__jet_end'
+_jet_beg = '\n# --- JET BEG --- #\n\n'
+_jet_end = '\n# --- JET END --- #\n\n'
 
-_jet_beg = '# --- JET BEG --- #'
-_jet_end = '# --- JET END --- #'
-
-_jet_split_re = re.compile('# --- JET (BEG|END) --- #')
+_jet_split_re = re.compile(r'\n# --- JET (BEG|END) --- #\n\n')
 
 
-# PATH
+# NOTEBOOK PATH
 def _find_file_path():
     """
     Find the local path to the current notebook.
@@ -60,7 +57,7 @@ def _find_file_path():
     return {'top_dir': os.getcwd(),'file_name': ntb_name}
 
 
-def _build_file_path():
+def _build_py_fp():
     """
     Construct the path to the generated python file.
     """
@@ -69,7 +66,7 @@ def _build_file_path():
     return mp['top_dir'] + '/' + mp['file_name'] + '.py'
 
 
-def _build_notebook_path():
+def _build_ntb_fp():
     """
     Construct the path to the existing notebook file.
     """
@@ -78,96 +75,92 @@ def _build_notebook_path():
     return mp['top_dir'] + '/' + mp['file_name'] + '.ipynb'
 
 
-# FILE
-def _load_file_ast():
+# JET CODE and JET FILE
+def _load_jet_code():
     """
-    Build the ast of the current python file.
+    Load the python file into jet_code format.
+
+        jet_code is a dict:
+            beg => content of begining (str)
+            body => declaration to save (OrderedDict)
+                symbol name => declaration
+                symbol name => declaration
+            beg => content of end (str)
+
+
     """
 
     # the ast should be empty if the file does not exist
-    mfp = _build_file_path()
-    if not os.path.isfile(mfp):
+    py_fp = _build_py_fp()
+    if not os.path.isfile(py_fp):
         return {'beg': '',
-                'symbols': [],
+                'body': OrderedDict(),
                 'end': ''}
 
     # if it does, the ast is loaded
-    with open(mfp) as source_file:
-        # TODO: add end
-        # file_code = source_file.read().split(_jet_beg)
-        file_code = _jet_split_re.split(source_file.read())[::2]
+    with open(py_fp) as py_f:
+        file_code = _jet_split_re.split(py_f.read())[::2]
 
-        # assert len(file_code) == 3
+        assert len(file_code) == 3, 'the jet file is not in the good format'
 
-        # if len(file_code) == 1:
-            # return {'beg': file_code[0]}
+        body_ast = ast.parse(file_code[1]).body
+
+        body_symb = OrderedDict()
+        for node in body_ast:
+            if hasattr(node, 'name'):
+                body_symb[node.name] = node
 
         return {'beg': file_code[0],
-                'symbols': ast.parse(file_code[1]).body,
+                'body': body_symb,
                 'end': file_code[2]}
 
 
-# symbols
-def _extract_symbols(file_ast):
+def _save_jet_file(jet_code):
     """
-    Extract the symbols from the file ast.
-    """
-
-    symbols = [(_jet_beg_key, file_ast['beg'] + _jet_beg)]
-    symbols += [(symb.name, codegen.to_source(symb) + '\n') for symb in file_ast['symbols']]
-    symbols += [(_jet_end_key, file_ast['end'] + _jet_end)]
-
-    return OrderedDict(symbols)
-
-
-def _save_symbols(symbols, file_path):
-    """
-    Save the symbols into the file.
+    Save the jet_code into a the jet file.
     """
 
-    symbols_content = '\n\n'.join(symbols.values())
+    # generate the code for the symbols
+    body_str = '\n'.join([codegen.to_source(symb)+'\n\n' for symb in jet_code['body'].values()])
 
-    print(symbols_content)
+    # concat eveything
+    jet_code_str = jet_code['beg'] + \
+                  _jet_beg + \
+                  body_str + \
+                  _jet_end + \
+                  jet_code['end']
 
-    with open(file_path, 'w') as file_file:
-        file_file.write(symbols_content)
+    # write into the file
+    py_fp = _build_py_fp()
+    with open(py_fp, 'w') as py_file:
+        py_file.write(jet_code_str)
 
-
-# DECLARATION symb
+# CELL and SYMBOLS
 def _find_last_decl(In, symb_name):
+    """
+    Iter through execution flow backward to find the last existing delaration.
+    """
+
     for cell in reversed(In):
+        # select only function and classes
         decl_ast = [decl for decl in ast.parse(cell).body if hasattr(decl, 'name')]
 
-        if len(decl_ast) > 0:
-            for decl in decl_ast:
-                if decl.name == symb_name:
-                    return codegen.to_source(decl) + '\n'
+        # retrieve the last
+        for decl in reversed(decl_ast):
+            if decl.name == symb_name:
+                return decl
+
+    return None
 
 
-def _update_decl(In, symbols, decl):
-    new_symbols = OrderedDict(symbols)
-    new_symbols[decl.__name__] = _find_last_decl(In, decl.__name__)
-    return new_symbols
-
-
-# BEG symb
-def _get_beg_symb(In):
-    raw_content = In[-1]
-    content = raw_content.split('\n')
-    content[-1] = _jet_beg
-
-    return (_jet_beg_key, '\n'.join(content))
-
-
-def _update_beg_symb(symbols_dict, beg_symb):
-    if _jet_beg_key in symbols_dict:
-        new_symbols = OrderedDict(symbols_dict)
-        new_symbols[_jet_beg_key] = beg_symb[1]
-        return new_symbols
+def _fetch_current_cell(In):
+    body = In[-1]
+    if len(body.split('\n')) == 1:
+        return ''
     else:
-        return OrderedDict([beg_symb] + \
-                           [(k, v) for k, v in symbols_dict.iteritems()] + \
-                           [end_symb])
+        # remove the last line
+        return body[:body.rfind('\n')]
+
 
 
 # POINT OF ENTRY
@@ -177,21 +170,38 @@ class JetMagics(Magics):
     @line_magic
     def jet_beg(self, arg_line):
         In = self.shell.user_ns['In']
-        new_symbols = _update_beg_symb(_extract_symbols(_load_file_ast()), _get_beg_symb(In))
+        jet_code = _load_jet_code()
 
-        _save_symbols(new_symbols, _build_file_path())
+        jet_code['beg'] = _fetch_current_cell(In)
+
+        _save_jet_file(jet_code)
+
+
+    @line_magic
+    def jet_end(self, arg_line):
+
+        In = self.shell.user_ns['In']
+        jet_code = _load_jet_code()
+
+        jet_code['end'] = _fetch_current_cell(In)
+
+        _save_jet_file(jet_code)
+
 
     @line_magic
     def jet(self, arg_line):
         In = self.shell.user_ns['In']
-        decl_list = [eval(func_name, self.shell.user_global_ns, self.shell.user_ns) for func_name in arg_line.split()]
+        update_list = [name for name in arg_line.split()]
 
-        new_symbols = reduce(lambda cur_bloc, new_decl: _update_decl(In, cur_bloc, new_decl),
-                            decl_list,
-                            _extract_symbols(_load_file_ast()))
+        jet_code = _load_jet_code()
 
-        _save_symbols(new_symbols, _build_file_path())
+        for name in update_list:
+            decl = _find_last_decl(In, name)
+            assert decl, 'the symbol "{}" is not defined'.format(name)
 
+            jet_code['body'][name] = decl
+
+        _save_jet_file(jet_code)
 
 def load_ipython_extension(ip):
     ip.register_magics(JetMagics)
