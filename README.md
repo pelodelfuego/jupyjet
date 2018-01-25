@@ -66,8 +66,8 @@ def circle_area(r):
 *Cell 3 - in the context of the notebook, we can run some experiement*<br>
 *We can then use these functions normally*
 ```
-print(circle_perim(2.))
-print(circle_area(2.2))
+print circle_perim(2.)
+print circle_area(2.2)
 ```
 *The results won't be saved into the file*
 
@@ -102,10 +102,13 @@ So this python generated module can be called from other notebooks.
 
 Install
 ---------
-Jupyjet is available on pip:
+Jupyjet is available on pip and compatible with both python2 and python3
 
 ```
 pip install jupyjet
+```
+
+```
 pip3 install jupyjet
 ```
 
